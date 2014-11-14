@@ -1,0 +1,12 @@
+packages
+.project
+.buildlog
+*.iml
+*.ipr
+*.iws
+.idea/
+*.dart.js
+*.js_
+*.js.deps
+*.js.map
+*.lock
