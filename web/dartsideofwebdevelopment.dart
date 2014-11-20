@@ -5,20 +5,27 @@ import 'package:stagexl/stagexl.dart';
 Random random = new Random();
 Stage stage;
 RenderLoop renderLoop;
+Juggler juggler;
+
+int pointer = 0;
 
 class Slide extends DisplayObjectContainer {
   final List<int> colors = [Color.Red];
   String mText;
   int mIndex = 0;
+  Tween mTween;
+  Bitmap boxBitmap;
 
   Slide(this.mText, this.mIndex) {
 
 
-    var box = new BitmapData(100, 100, false, Color.Red);
-    var boxBitmap = new Bitmap(box);
-    boxBitmap.x = 0 + 100 * mIndex;
+    var box = new BitmapData(10, 10, false, Color.Red);
+    boxBitmap = new Bitmap(box);
+    boxBitmap.x = 100 * mIndex;
     boxBitmap.y = 0;
     addChild(boxBitmap);
+
+
 
 
     var textField1 = new TextField();
@@ -30,6 +37,28 @@ class Slide extends DisplayObjectContainer {
     textField1.width = 920;
     textField1.height = 20;
     addChild(textField1);
+    
+    
+    mTween = new Tween(this, 0.4, TransitionFunction.easeInCircular);
+
+  }
+  
+  void back(){
+    int newx = boxBitmap.x + (-100 * pointer);
+    print("Slide $mIndex back to $newx");
+    mTween.animate.x.to(newx);
+    mTween.animate.y.to(0);
+    mTween.animate.alpha.to(1);
+    juggler.add(mTween);
+  }
+  
+  void forward(){
+    int newx = boxBitmap.x + (100 * pointer);
+    print("Slide $mIndex forward to $newx");
+    mTween.animate.x.to(newx);
+    mTween.animate.y.to(0);
+    mTween.animate.alpha.to(0.5);
+    juggler.add(mTween);
   }
 
 }
@@ -39,48 +68,38 @@ void main() {
   var stage = new Stage(canvas);
   var renderLoop = new RenderLoop();
   renderLoop.addStage(stage);
-  var juggler = renderLoop.juggler;
+  juggler = renderLoop.juggler;
 
-  Slide slide1 = new Slide("Prima\nslide", 1);
-  Slide slide2 = new Slide("Seconda\nslide", 2);
+  Slide slide1 = new Slide("Prima slide", 1);
+  Slide slide2 = new Slide("Seconda slide", 2);
+  Slide slide3 = new Slide("Terza slide", 3);
 
   stage.addChild(slide1);
   stage.addChild(slide2);
+  stage.addChild(slide3);
 
   stage.focus = stage;
-
-
+ 
   stage.onKeyDown.listen((ev) {
-    var tween = new Tween(slide1, 0.4, TransitionFunction.linear);
-    var tween2 = new Tween(slide2, 0.4, TransitionFunction.linear);
 
     switch (ev.keyCode) {
       case 38:
-        tween.animate.x.to(0);
-        tween.animate.y.to(0);
-        tween.animate.alpha.to(1);
-
-        tween2.animate.x.to(350);
-        tween2.animate.y.to(0);
-        tween2.animate.alpha.to(0.5);
-
+        pointer += 1;
+        slide1.back();
+        slide2.back();
+        slide3.back();
 
         break;
       case 40:
-        tween.animate.x.to(-100);
-        tween.animate.y.to(0);
-        tween.animate.alpha.to(0.5);
+        pointer -= 1;
 
-        tween2.animate.x.to(0);
-        tween2.animate.y.to(0);
-        tween2.animate.alpha.to(1);
+        slide1.forward();
+        slide2.forward();
+        slide3.forward();
 
         break;
     }
-    juggler.add(tween);
-    juggler.add(tween2);
-
-
+    print("Pointer " + pointer.toString());
 
   });
 }
