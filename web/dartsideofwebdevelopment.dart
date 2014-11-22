@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:html';
+import 'dart:html' as html;
 import 'dart:math' as math;
 
 import 'package:stagexl/stagexl.dart';
@@ -19,11 +19,13 @@ class Slide extends DisplayObjectContainer {
   Tween mTween;
   Bitmap boxBitmap;
   TextField textField1;
+  
+  bool hasEvent = false;
 
   Slide(this.mText, this.mIndex) {
 
 
-    var box = new BitmapData(800, 300, false, Color.Lavender);
+    var box = new BitmapData(800, 300, false, Color.Black);
     boxBitmap = new Bitmap(box);
     addChild(boxBitmap);
 
@@ -37,63 +39,87 @@ class Slide extends DisplayObjectContainer {
     addChild(textField1);
 
     resourcemanager.load().then((_) {
-    var logo = new Bitmap(resourcemanager.getBitmapData("logo"));
-    addChild(logo);
+      var logo = new Bitmap(resourcemanager.getBitmapData("logo"));
+      logo.x = this.bounds.center.x - logo.width / 2;
+      logo.y = this.bounds.center.y - logo.height / 2;
+
+      addChild(logo);
+
     });
-    
+
+
   }
+
+
+
+
+  bool event() {
+    if ( this.hasEvent ) {
+      print("Click");
+      hasEvent = false;
+      return true;
+    }
+     return hasEvent;
+    }
+
+  
 
 }
 
 void main() {
-  var canvas = querySelector('#stage');
+  var canvas = html.querySelector('#stage');
   stage = new Stage(canvas, webGL: true);
   renderLoop = new RenderLoop();
-  
+
   stage.scaleMode = StageScaleMode.NO_SCALE;
   stage.align = StageAlign.NONE;
 
   renderLoop.addStage(stage);
-  
-  resourcemanager = new ResourceManager()
-     ..addBitmapData("logo", "images/logo.png");
 
-  
+  resourcemanager = new ResourceManager()..addBitmapData("logo", "images/logo.png");
+
+
   var textField = new TextField();
-    textField.defaultTextFormat = new TextFormat("Arial", 36, Color.Black, align: TextFormatAlign.CENTER);
-    textField.width = 400;
-    textField.x = stage.contentRectangle.center.x - 200;
-    textField.y = stage.contentRectangle.center.y - 20;
-    textField.text = "Join the Dart Side of Web Development";
-    textField.addTo(stage);
+  textField.defaultTextFormat = new TextFormat("Arial", 36, Color.Black, align: TextFormatAlign.CENTER);
+  textField.width = 900;
+  textField.x = stage.contentRectangle.center.x - 200;
+  textField.y = stage.contentRectangle.center.y - 20;
+  textField.text = "Join the Dart Side of Web Development";
+  textField.addTo(stage);
 
 
   Slide slide1 = new Slide("Prima slide", 0);
   Slide slide2 = new Slide("Seconda slide", 1);
+  slide2.hasEvent = true;
+
   Slide slide3 = new Slide("Terza slide", 2);
 
   var slideIndex = 0;
   var slides = [slide1, slide2, slide3];
- 
+
   stage.focus = stage;
 
   stage.onKeyDown.listen((ev) {
-
-    switch (ev.keyCode) {
-      case 38:
-        textField.removeFromParent();
-        slideIndex = (slideIndex + 1) % slides.length;
-        showSlide(slides[slideIndex]);
-        break;
-      case 40:
-        textField.removeFromParent();
-        slideIndex = (slideIndex - 1) % slides.length;
-        showSlide(slides[slideIndex]);
-        break;
+    
+    if ( !slides[slideIndex].event()) {
+      switch (ev.keyCode) {
+           case 38:
+             textField.removeFromParent();
+             slideIndex = (slideIndex + 1) % slides.length;
+             showSlide(slides[slideIndex]);
+             break;
+           case 40:
+             textField.removeFromParent();
+             slideIndex = (slideIndex - 1) % slides.length;
+             showSlide(slides[slideIndex]);
+             break;
+         }
+         print("Pointer $slideIndex");
     }
-    print("Pointer $slideIndex");
+   
 
   });
+
 }
 
 
@@ -112,8 +138,8 @@ void showSlide(DisplayObject slide) {
   stage.juggler.tween(oldSlideCached, 0.5, TransitionFunction.easeInCubic)
       ..animate.x.to(rect.right - oldSlideCached.bounds.left)
       ..onComplete = () {
-    oldSlideCached.removeFromParent();
-    oldSlideCached.removeCache();
+        oldSlideCached.removeFromParent();
+        oldSlideCached.removeCache();
       };
 
   currentSlide = slide;
@@ -126,6 +152,5 @@ void showSlide(DisplayObject slide) {
   var size = currentSlideCached.bounds.align();
   currentSlideCached.applyCache(size.left, size.top, size.width, size.height);
 
-  stage.juggler.tween(currentSlideCached, 0.5, TransitionFunction.easeInCubic)
-      ..animate.x.to(rect.center.x);
+  stage.juggler.tween(currentSlideCached, 0.5, TransitionFunction.easeInCubic)..animate.x.to(rect.center.x);
 }
