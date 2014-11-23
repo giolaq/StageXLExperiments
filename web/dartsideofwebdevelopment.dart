@@ -12,14 +12,15 @@ ResourceManager resourcemanager;
 DisplayObject currentSlide = new Sprite();
 DisplayObject currentSlideCached = new Sprite();
 
-class Slide extends DisplayObjectContainer {
+class Slide extends Sprite {
   final List<int> colors = [Color.Red];
   String mText;
   int mIndex = 0;
-  Tween mTween;
   Bitmap boxBitmap;
   TextField textField1;
-  
+  Juggler _juggler = new Juggler();
+  Bitmap logo;
+
   bool hasEvent = false;
 
   Slide(this.mText, this.mIndex) {
@@ -39,7 +40,7 @@ class Slide extends DisplayObjectContainer {
     addChild(textField1);
 
     resourcemanager.load().then((_) {
-      var logo = new Bitmap(resourcemanager.getBitmapData("logo"));
+      logo = new Bitmap(resourcemanager.getBitmapData("logo"));
       logo.x = this.bounds.center.x - logo.width / 2;
       logo.y = this.bounds.center.y - logo.height / 2;
 
@@ -56,6 +57,7 @@ class Slide extends DisplayObjectContainer {
   bool event() {
     if ( this.hasEvent ) {
       print("Click");
+      _juggler.tween(logo, 0.5, TransitionFunction.easeInCubic)..animate.alpha.to(0.4);
       hasEvent = false;
       return true;
     }
@@ -106,12 +108,12 @@ void main() {
            case 38:
              textField.removeFromParent();
              slideIndex = (slideIndex + 1) % slides.length;
-             showSlide(slides[slideIndex]);
+             showSlideF(slides[slideIndex]);
              break;
            case 40:
              textField.removeFromParent();
              slideIndex = (slideIndex - 1) % slides.length;
-             showSlide(slides[slideIndex]);
+             showSlideB(slides[slideIndex]);
              break;
          }
          print("Pointer $slideIndex");
@@ -124,7 +126,7 @@ void main() {
 
 
 
-void showSlide(DisplayObject slide) {
+void showSlideB(DisplayObject slide) {
 
   var rect = stage.contentRectangle;
   var bounds = slide.bounds;
@@ -145,6 +147,39 @@ void showSlide(DisplayObject slide) {
   currentSlide = slide;
   currentSlideCached = new Sprite()
       ..x = rect.left - currentSlide.width
+      ..y = rect.center.y
+      ..addChild(currentSlide)
+      ..addTo(stage);
+
+  var size = currentSlideCached.bounds.align();
+  currentSlideCached.applyCache(size.left, size.top, size.width, size.height);
+
+  stage.juggler.tween(currentSlideCached, 0.5, TransitionFunction.easeInCubic)..animate.x.to(rect.center.x);
+}
+
+
+
+void showSlideF(DisplayObject slide) {
+
+  var rect = stage.contentRectangle;
+  var bounds = slide.bounds;
+  var scale = math.min(rect.width / bounds.width, rect.height / bounds.height);
+  var oldSlideCached = currentSlideCached;
+
+  slide.pivotX = bounds.center.x;
+  slide.pivotY = bounds.center.y;
+  slide.scaleY = slide.scaleX = scale * 0.9;
+
+  stage.juggler.tween(oldSlideCached, 0.5, TransitionFunction.easeInCubic)
+      ..animate.x.to(rect.left - oldSlideCached.bounds.width)
+      ..onComplete = () {
+        oldSlideCached.removeFromParent();
+        oldSlideCached.removeCache();
+      };
+
+  currentSlide = slide;
+  currentSlideCached = new Sprite()
+      ..x = rect.right + currentSlide.width
       ..y = rect.center.y
       ..addChild(currentSlide)
       ..addTo(stage);
