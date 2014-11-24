@@ -13,20 +13,17 @@ DisplayObject currentSlide = new Sprite();
 DisplayObject currentSlideCached = new Sprite();
 
 class Slide extends Sprite {
-  final List<int> colors = [Color.Red];
   String mText;
-  int mIndex = 0;
   Bitmap boxBitmap;
   TextField textField1;
-  Juggler _juggler = new Juggler();
   Bitmap logo;
 
   bool hasEvent = false;
 
-  Slide(this.mText, this.mIndex) {
+  Slide(this.mText) {
 
 
-    var box = new BitmapData(800, 300, false, Color.Black);
+    var box = new BitmapData(800, 500, false, Color.Black);
     boxBitmap = new Bitmap(box);
     addChild(boxBitmap);
 
@@ -39,14 +36,12 @@ class Slide extends Sprite {
     textField1.height = 20;
     addChild(textField1);
 
-    resourcemanager.load().then((_) {
       logo = new Bitmap(resourcemanager.getBitmapData("logo"));
       logo.x = this.bounds.center.x - logo.width / 2;
       logo.y = this.bounds.center.y - logo.height / 2;
-
       addChild(logo);
 
-    });
+   
 
 
   }
@@ -57,7 +52,9 @@ class Slide extends Sprite {
   bool event() {
     if ( this.hasEvent ) {
       print("Click");
-      _juggler.tween(logo, 0.5, TransitionFunction.easeInCubic)..animate.alpha.to(0.4);
+      stage.juggler.clear();
+      stage.juggler.tween(logo, 0.4, TransitionFunction.linear)..animate.x.to(0)
+      ..onComplete=(){ print("complete"); };
       hasEvent = false;
       return true;
     }
@@ -80,46 +77,39 @@ void main() {
 
   resourcemanager = new ResourceManager()..addBitmapData("logo", "images/logo.png");
 
+  resourcemanager.load().then((_) {
 
-  var textField = new TextField();
-  textField.defaultTextFormat = new TextFormat("Arial", 36, Color.Black, align: TextFormatAlign.CENTER);
-  textField.width = 900;
-  textField.x = stage.contentRectangle.center.x - 200;
-  textField.y = stage.contentRectangle.center.y - 20;
-  textField.text = "Join the Dart Side of Web Development";
-  textField.addTo(stage);
-
-
-  Slide slide1 = new Slide("Prima slide", 0);
-  Slide slide2 = new Slide("Seconda slide", 1);
+  Slide slide1 = new Slide("Prima slide");
+  Slide slide2 = new Slide("Seconda slide");
   slide2.hasEvent = true;
 
-  Slide slide3 = new Slide("Terza slide", 2);
+  Slide slide3 = new Slide("Terza slide");
 
   var slideIndex = 0;
   var slides = [slide1, slide2, slide3];
 
   stage.focus = stage;
 
+  showSlideF(slides[slideIndex]);
+
   stage.onKeyDown.listen((ev) {
     
     if ( !slides[slideIndex].event()) {
       switch (ev.keyCode) {
            case 38:
-             textField.removeFromParent();
              slideIndex = (slideIndex + 1) % slides.length;
              showSlideF(slides[slideIndex]);
              break;
            case 40:
-             textField.removeFromParent();
              slideIndex = (slideIndex - 1) % slides.length;
              showSlideB(slides[slideIndex]);
              break;
          }
-         print("Pointer $slideIndex");
     }
    
 
+  });
+  
   });
 
 }
@@ -185,7 +175,8 @@ void showSlideF(DisplayObject slide) {
       ..addTo(stage);
 
   var size = currentSlideCached.bounds.align();
-  currentSlideCached.applyCache(size.left, size.top, size.width, size.height);
+  //Disabling cache for now
+  //currentSlideCached.applyCache(size.left, size.top, size.width, size.height);
 
   stage.juggler.tween(currentSlideCached, 0.5, TransitionFunction.easeInCubic)..animate.x.to(rect.center.x);
 }
